@@ -10,6 +10,7 @@ contract Hire{
     bool public markCompleted = false;
     bool public goodWork = false;
     bool public badWork = false;
+    bool public extraFast = false;
 
     event _deposit(uint amount);
     event _handshake(address payable employee);
@@ -71,20 +72,33 @@ contract Hire{
 
     function pay() onlyEmployee public {
       uint balance = address(this).balance;
-      if(goodWork){
-        balance = balance * 6/5;
-      }
-      else if(badWork){
-        balance = balance * 4/5;
-      }
       if (passedTimeFrame()) {
-          employee.transfer(balance);
-          emit _pay(balance);
-      } else {
-        uint amountFast = balance * (getTimestamp() - startTime) / timeframe;
-        employee.transfer(amountFast);
-        emit _pay(amountFast);
+        if(goodWork){
+          balance = balance * 6/5;
+        }
+        else if(badWork){
+          balance = balance * 4/5;
+        }
+        employee.transfer(balance);
+        emit _pay(balance);
+      } 
+      else {
+        if ((getTimestamp() - startTime) < timeframe * 3/4 ){
+          if(!badWork){
+            balance = balance * 11/10;
+          }
+        }
+        if(goodWork){
+          balance = balance * 6/5;
+        }
+        else if(badWork){
+          balance = balance * 4/5;
+        }
+        employee.transfer(balance);
+        emit _pay(balance);
       }
+      employee.transfer(balance);
+      emit _pay(balance);
     }
 
     function complete() onlyOwner onlyStarted public {
@@ -99,5 +113,9 @@ contract Hire{
 
     function markBad() onlyOwner onlyComplete public {
       badWork = true;
+    }
+
+    function markExtraFast() onlyOwner public {
+      extraFast = true;
     }
 }
