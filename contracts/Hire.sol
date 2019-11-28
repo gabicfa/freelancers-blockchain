@@ -1,19 +1,22 @@
-pragma solidity 0.4.21;
+pragma solidity ^0.5.0;
 
 contract Hire{
+
     address public owner;
-    address public employee;
+    address payable public employee;
     uint256 public timeframe;
     uint256 public startTime;
     uint256 public endTimestamp;
     bool public markCompleted = false;
+    bool public goodWork = false;
+    bool public badWork = false;
 
     event _deposit(uint amount);
-    event _handshake(address employee);
+    event _handshake(address payable employee);
     event _completed();
     event _pay(uint amount);
 
-    function Hire (uint256 _endTimestamp) public {
+    constructor (uint256 _endTimestamp) public {
       owner = msg.sender;
       endTimestamp = _endTimestamp;
       startTime = getTimestamp();
@@ -40,35 +43,45 @@ contract Hire{
       _;
     }
 
+    modifier onlyComplete() {
+      require(markCompleted == true);
+      _;
+    }
+
     function handShake () notOwner public {
         employee = msg.sender;
         startTime = now;
         emit _handshake(msg.sender);
     }
     
-    function getTimestamp() constant internal returns (uint256) {
+    function getTimestamp() view internal returns (uint256) {
       return now;
     }
 
-    function isCompleted() constant public returns (bool) {
+    function isCompleted() view public returns (bool) {
       if (markCompleted || passedTimeFrame()) {
         return true;
       }
-
       return false;
     }
 
-    function passedTimeFrame() constant public returns (bool) {
+    function passedTimeFrame() view public returns (bool) {
       return getTimestamp() - startTime > timeframe;
     }
 
     function pay() onlyEmployee public {
       uint balance = address(this).balance;
+      if(goodWork){
+        balance = balance * 6/5;
+      }
+      else if(badWork){
+        balance = balance * 4/5;
+      }
       if (passedTimeFrame()) {
-        employee.transfer(balance);
-        emit _pay(balance);
+          employee.transfer(balance);
+          emit _pay(balance);
       } else {
-        uint amountFast = balance + (balance*0.2);
+        uint amountFast = balance * (getTimestamp() - startTime) / timeframe;
         employee.transfer(amountFast);
         emit _pay(amountFast);
       }
@@ -78,5 +91,13 @@ contract Hire{
       employee.transfer(address(this).balance);
       markCompleted = true;
       emit _completed();
+    }
+
+    function markGood() onlyOwner onlyComplete public {
+      goodWork = true;
+    }
+
+    function markBad() onlyOwner onlyComplete public {
+      badWork = true;
     }
 }
