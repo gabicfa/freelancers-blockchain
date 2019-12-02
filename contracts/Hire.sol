@@ -81,9 +81,9 @@ contract Hire{
         }
         employee.transfer(balance);
         emit _pay(balance);
-      } 
+      }
       else {
-        if ((getTimestamp() - startTime) < timeframe * 3/4 ){
+        if (((getTimestamp() - startTime) < timeframe * 3/4 ) && extraFast){
           if(!badWork){
             balance = balance * 11/10;
           }
