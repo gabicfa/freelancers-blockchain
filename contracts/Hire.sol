@@ -15,7 +15,7 @@ contract Hire{
     event _deposit(uint amount);
     event _handshake(address payable employee);
     event _completed();
-    event _pay(uint amount);
+    // event _pay(uint amount);
 
     constructor (uint256 _endTimestamp) public {
       owner = msg.sender;
@@ -49,6 +49,10 @@ contract Hire{
       _;
     }
 
+    function deposit() onlyOwner payable public {
+      emit _deposit(msg.value);
+    }
+
     function handShake () notOwner public {
         employee = msg.sender;
         startTime = now;
@@ -70,7 +74,7 @@ contract Hire{
       return getTimestamp() - startTime > timeframe;
     }
 
-    function pay() onlyEmployee public {
+    function complete() onlyOwner onlyStarted public {
       uint balance = address(this).balance;
       if (passedTimeFrame()) {
         if(goodWork){
@@ -80,7 +84,7 @@ contract Hire{
           balance = balance * 4/5;
         }
         employee.transfer(balance);
-        emit _pay(balance);
+        emit _completed();
       }
       else {
         if (((getTimestamp() - startTime) < timeframe * 3/4 ) && extraFast){
@@ -95,15 +99,9 @@ contract Hire{
           balance = balance * 4/5;
         }
         employee.transfer(balance);
-        emit _pay(balance);
+        emit _completed();
       }
       employee.transfer(balance);
-      emit _pay(balance);
-    }
-
-    function complete() onlyOwner onlyStarted public {
-      employee.transfer(address(this).balance);
-      markCompleted = true;
       emit _completed();
     }
 
